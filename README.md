@@ -173,12 +173,12 @@ energy-ingestion-engine/
 ```
 ┌─────────────────┐
 │  Smart Meters   │──┐
-│  (AC Power)      │  │
+│  (AC Power)     │  │
 └─────────────────┘  │
                      ├──► POST /v1/telemetry ──┐
-┌─────────────────┐  │                        │
-│  EV Vehicles     │──┘                        │
-│  (DC Power)      │                            ▼
+┌─────────────────┐  │                         │
+│  EV Vehicles    │──┘                         │
+│  (DC Power)     │                            ▼
 └─────────────────┘                    ┌─────────────────┐
                                        │  Telemetry      │
                                        │  Controller     │
@@ -190,23 +190,23 @@ energy-ingestion-engine/
                                        │  Service        │
                                        └────────┬────────┘
                                                 │
-                    ┌──────────────────────────┴──────────────────────────┐
+                    ┌────────────────────────── ┴──────────────────────────┐
                     │                                                      │
                     ▼                                                      ▼
         ┌──────────────────────┐                          ┌──────────────────────┐
-        │  History Tables       │                          │  Current Status      │
-        │  (INSERT only)         │                          │  (UPSERT)            │
-        │                       │                          │                      │
-        │  • vehicle_history    │                          │  • current_vehicle   │
-        │  • meter_history      │                          │  • current_meter     │
+        │  History Tables      │                          │  Current Status      │
+        │  (INSERT only)       │                          │  (UPSERT)            │
+        │                      │                          │                      │
+        │  • vehicle_history   │                          │  • current_vehicle   │
+        │  • meter_history     │                          │  • current_meter     │
         └──────────────────────┘                          └──────────────────────┘
-                    │                                                      │
+                    │                                                     │
                     └──────────────────┬──────────────────────────────────┘
                                        │
                                        ▼
                             ┌──────────────────────┐
                             │  Analytics Service   │
-                            │  (Indexed Queries)  │
+                            │  (Indexed Queries)   │
                             └──────────┬──────────┘
                                        │
                                        ▼
@@ -264,7 +264,7 @@ AppModule (Root)
        ▼
 ┌──────────────────────────────┐
 │  POST /v1/telemetry          │
-│  TelemetryController          │
+│  TelemetryController         │
 └──────┬───────────────────────┘
        │
        │ Polymorphic routing
@@ -280,8 +280,8 @@ AppModule (Root)
        ▼
 ┌──────────────────────────────┐
 │  TelemetryService            │
-│  • ingestMeter()            │
-│  • ingestVehicle()          │
+│  • ingestMeter()             │
+│  • ingestVehicle()           │
 └──────┬───────────────────────┘
        │
        ├──────────────────────────────┐
@@ -289,7 +289,7 @@ AppModule (Root)
        ▼                              ▼
 ┌──────────────────┐        ┌──────────────────┐
 │  History Table   │        │  Current Status  │
-│  (INSERT)         │        │  (UPSERT)        │
+│  (INSERT)        │        │  (UPSERT)        │
 │                  │        │                  │
 │  • Append-only   │        │  • Atomic update │
 │  • Audit trail   │        │  • Latest state  │
@@ -311,8 +311,8 @@ AppModule (Root)
        │
        ▼
 ┌──────────────────────────────┐
-│  AnalyticsService           │
-│  getVehiclePerformance()    │
+│  AnalyticsService            │
+│  getVehiclePerformance()     │
 └──────┬───────────────────────┘
        │
        │ Step 1: Resolve meter
@@ -320,7 +320,7 @@ AppModule (Root)
 ┌──────────────────────────────┐
 │  vehicle_meter_mapping       │
 │  WHERE vehicleId = ?         │
-│  (Primary key lookup)         │
+│  (Primary key lookup)        │
 └──────┬───────────────────────┘
        │
        │ Step 2: Query vehicle history
@@ -346,7 +346,7 @@ AppModule (Root)
 ┌──────────────────────────────┐
 │  Response:                   │
 │  • AC consumed (sum)         │
-│  • DC delivered (sum)         │
+│  • DC delivered (sum)        │
 │  • Efficiency ratio          │
 │  • Avg battery temp          │
 └──────────────────────────────┘
