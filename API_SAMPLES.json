@@ -1,0 +1,287 @@
+{
+  "description": "JSON samples for Energy Ingestion Engine API endpoints",
+  
+  "1_vehicle_meter_mapping": {
+    "endpoint": "POST /v1/analytics/mappings",
+    "description": "Create or update a vehicle-to-meter mapping (required before analytics)",
+    "sample": {
+      "vehicleId": "EV-101",
+      "meterId": "meter-001"
+    },
+    "example_curl": "curl -X POST http://localhost:3000/v1/analytics/mappings -H 'Content-Type: application/json' -d '{\"vehicleId\":\"EV-101\",\"meterId\":\"meter-001\"}'"
+  },
+
+  "2_meter_telemetry": {
+    "endpoint": "POST /v1/telemetry",
+    "description": "Ingest meter telemetry data (AC consumption from Smart Meter)",
+    "sample": {
+      "meterId": "meter-001",
+      "kwhConsumedAc": 125.5,
+      "voltage": 240.0,
+      "timestamp": "2026-02-09T10:30:00Z"
+    },
+    "multiple_samples": [
+      {
+        "meterId": "meter-001",
+        "kwhConsumedAc": 125.5,
+        "voltage": 240.0,
+        "timestamp": "2026-02-09T10:30:00Z"
+      },
+      {
+        "meterId": "meter-001",
+        "kwhConsumedAc": 128.2,
+        "voltage": 239.8,
+        "timestamp": "2026-02-09T10:31:00Z"
+      },
+      {
+        "meterId": "meter-002",
+        "kwhConsumedAc": 95.3,
+        "voltage": 240.2,
+        "timestamp": "2026-02-09T10:30:00Z"
+      }
+    ],
+    "example_curl": "curl -X POST http://localhost:3000/v1/telemetry -H 'Content-Type: application/json' -d '{\"meterId\":\"meter-001\",\"kwhConsumedAc\":125.5,\"voltage\":240.0,\"timestamp\":\"2026-02-09T10:30:00Z\"}'"
+  },
+
+  "3_vehicle_telemetry": {
+    "endpoint": "POST /v1/telemetry",
+    "description": "Ingest vehicle telemetry data (DC delivery and battery status from EV)",
+    "sample": {
+      "vehicleId": "EV-101",
+      "soc": 85.5,
+      "kwhDeliveredDc": 45.2,
+      "batteryTemp": 28.5,
+      "timestamp": "2026-02-09T10:30:00Z"
+    },
+    "multiple_samples": [
+      {
+        "vehicleId": "EV-101",
+        "soc": 85.5,
+        "kwhDeliveredDc": 45.2,
+        "batteryTemp": 28.5,
+        "timestamp": "2026-02-09T10:30:00Z"
+      },
+      {
+        "vehicleId": "EV-101",
+        "soc": 86.2,
+        "kwhDeliveredDc": 45.8,
+        "batteryTemp": 29.1,
+        "timestamp": "2026-02-09T10:31:00Z"
+      },
+      {
+        "vehicleId": "EV-102",
+        "soc": 72.0,
+        "kwhDeliveredDc": 38.5,
+        "batteryTemp": 27.8,
+        "timestamp": "2026-02-09T10:30:00Z"
+      }
+    ],
+    "example_curl": "curl -X POST http://localhost:3000/v1/telemetry -H 'Content-Type: application/json' -d '{\"vehicleId\":\"EV-101\",\"soc\":85.5,\"kwhDeliveredDc\":45.2,\"batteryTemp\":28.5,\"timestamp\":\"2026-02-09T10:30:00Z\"}'"
+  },
+
+  "4_complete_workflow_example": {
+    "description": "Complete workflow: Create mapping, ingest data, then query analytics",
+    "step_1_create_mapping": {
+      "endpoint": "POST /v1/analytics/mappings",
+      "request": {
+        "vehicleId": "EV-101",
+        "meterId": "meter-001"
+      }
+    },
+    "step_2_ingest_meter_data": {
+      "endpoint": "POST /v1/telemetry",
+      "requests": [
+        {
+          "meterId": "meter-001",
+          "kwhConsumedAc": 100.0,
+          "voltage": 240.0,
+          "timestamp": "2026-02-09T00:00:00Z"
+        },
+        {
+          "meterId": "meter-001",
+          "kwhConsumedAc": 105.5,
+          "voltage": 240.0,
+          "timestamp": "2026-02-09T00:01:00Z"
+        },
+        {
+          "meterId": "meter-001",
+          "kwhConsumedAc": 110.2,
+          "voltage": 240.0,
+          "timestamp": "2026-02-09T00:02:00Z"
+        }
+      ]
+    },
+    "step_3_ingest_vehicle_data": {
+      "endpoint": "POST /v1/telemetry",
+      "requests": [
+        {
+          "vehicleId": "EV-101",
+          "soc": 80.0,
+          "kwhDeliveredDc": 85.0,
+          "batteryTemp": 25.0,
+          "timestamp": "2026-02-09T00:00:00Z"
+        },
+        {
+          "vehicleId": "EV-101",
+          "soc": 81.0,
+          "kwhDeliveredDc": 86.5,
+          "batteryTemp": 25.5,
+          "timestamp": "2026-02-09T00:01:00Z"
+        },
+        {
+          "vehicleId": "EV-101",
+          "soc": 82.0,
+          "kwhDeliveredDc": 88.0,
+          "batteryTemp": 26.0,
+          "timestamp": "2026-02-09T00:02:00Z"
+        }
+      ]
+    },
+    "step_4_query_analytics": {
+      "endpoint": "GET /v1/analytics/performance/EV-101",
+      "expected_response": {
+        "vehicleId": "EV-101",
+        "period": "last_24_hours",
+        "energy": {
+          "acConsumed": 315.7,
+          "dcDelivered": 259.5,
+          "efficiencyRatio": 0.82
+        },
+        "battery": {
+          "avgTemperature": 25.5
+        }
+      }
+    }
+  },
+
+  "5_field_descriptions": {
+    "meter_telemetry": {
+      "meterId": "Unique identifier for the Smart Meter (string, required)",
+      "kwhConsumedAc": "AC power consumed in kilowatt-hours (number, required)",
+      "voltage": "Voltage reading in volts (number, required)",
+      "timestamp": "ISO 8601 timestamp (string, required, format: YYYY-MM-DDTHH:mm:ssZ)"
+    },
+    "vehicle_telemetry": {
+      "vehicleId": "Unique identifier for the EV vehicle (string, required)",
+      "soc": "State of Charge - battery percentage 0-100 (number, required)",
+      "kwhDeliveredDc": "DC power delivered to battery in kilowatt-hours (number, required)",
+      "batteryTemp": "Battery temperature in Celsius (number, required)",
+      "timestamp": "ISO 8601 timestamp (string, required, format: YYYY-MM-DDTHH:mm:ssZ)"
+    },
+    "mapping": {
+      "vehicleId": "Unique identifier for the EV vehicle (string, required)",
+      "meterId": "Unique identifier for the Smart Meter (string, required)"
+    }
+  },
+
+  "6_test_scenarios": {
+    "scenario_1_basic_ingestion": {
+      "description": "Basic single record ingestion",
+      "meter": {
+        "meterId": "meter-001",
+        "kwhConsumedAc": 125.5,
+        "voltage": 240.0,
+        "timestamp": "2026-02-09T10:30:00Z"
+      },
+      "vehicle": {
+        "vehicleId": "EV-101",
+        "soc": 85.5,
+        "kwhDeliveredDc": 45.2,
+        "batteryTemp": 28.5,
+        "timestamp": "2026-02-09T10:30:00Z"
+      }
+    },
+    "scenario_2_time_series": {
+      "description": "60-second interval data (typical production pattern)",
+      "meter_samples": [
+        {
+          "meterId": "meter-001",
+          "kwhConsumedAc": 100.0,
+          "voltage": 240.0,
+          "timestamp": "2026-02-09T10:00:00Z"
+        },
+        {
+          "meterId": "meter-001",
+          "kwhConsumedAc": 100.5,
+          "voltage": 240.0,
+          "timestamp": "2026-02-09T10:01:00Z"
+        },
+        {
+          "meterId": "meter-001",
+          "kwhConsumedAc": 101.0,
+          "voltage": 240.0,
+          "timestamp": "2026-02-09T10:02:00Z"
+        }
+      ],
+      "vehicle_samples": [
+        {
+          "vehicleId": "EV-101",
+          "soc": 80.0,
+          "kwhDeliveredDc": 85.0,
+          "batteryTemp": 25.0,
+          "timestamp": "2026-02-09T10:00:00Z"
+        },
+        {
+          "vehicleId": "EV-101",
+          "soc": 80.5,
+          "kwhDeliveredDc": 85.5,
+          "batteryTemp": 25.2,
+          "timestamp": "2026-02-09T10:01:00Z"
+        },
+        {
+          "vehicleId": "EV-101",
+          "soc": 81.0,
+          "kwhDeliveredDc": 86.0,
+          "batteryTemp": 25.4,
+          "timestamp": "2026-02-09T10:02:00Z"
+        }
+      ]
+    },
+    "scenario_3_multiple_vehicles_one_meter": {
+      "description": "One meter serving multiple vehicles (common fleet scenario)",
+      "mappings": [
+        {
+          "vehicleId": "EV-101",
+          "meterId": "meter-001"
+        },
+        {
+          "vehicleId": "EV-102",
+          "meterId": "meter-001"
+        },
+        {
+          "vehicleId": "EV-103",
+          "meterId": "meter-001"
+        }
+      ],
+      "meter_data": {
+        "meterId": "meter-001",
+        "kwhConsumedAc": 350.0,
+        "voltage": 240.0,
+        "timestamp": "2026-02-09T10:30:00Z"
+      },
+      "vehicle_data": [
+        {
+          "vehicleId": "EV-101",
+          "soc": 85.0,
+          "kwhDeliveredDc": 100.0,
+          "batteryTemp": 28.0,
+          "timestamp": "2026-02-09T10:30:00Z"
+        },
+        {
+          "vehicleId": "EV-102",
+          "soc": 75.0,
+          "kwhDeliveredDc": 90.0,
+          "batteryTemp": 27.5,
+          "timestamp": "2026-02-09T10:30:00Z"
+        },
+        {
+          "vehicleId": "EV-103",
+          "soc": 90.0,
+          "kwhDeliveredDc": 110.0,
+          "batteryTemp": 29.0,
+          "timestamp": "2026-02-09T10:30:00Z"
+        }
+      ]
+    }
+  }
+}
